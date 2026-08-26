@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { authApi } from './api'
 import './Auth.css'
 
 export default function Auth({ onLogin, theme, toggleTheme }) {
@@ -56,30 +57,76 @@ export default function Auth({ onLogin, theme, toggleTheme }) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
 
     setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      const user = {
-        name: mode === 'signup' ? formData.name.trim() : (formData.name.trim() || 'أحمد كمال'),
-        email: formData.email.trim(),
+    setErrors({})
+    try {
+      if (mode === 'signup') {
+        const { data } = await authApi.register({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+          password_confirmation: formData.confirmPassword,
+        })
+        localStorage.setItem('sehatek_token', data.token)
+        onLogin({
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+        })
+      } else {
+        const { data } = await authApi.login({
+          email: formData.email.trim(),
+          password: formData.password,
+        })
+        localStorage.setItem('sehatek_token', data.token)
+        onLogin({
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+        })
       }
-      onLogin(user)
-    }, 600)
+    } catch (err) {
+      if (err.response?.status === 422) {
+        const apiErrors = err.response.data.errors || {}
+        const mapped = {}
+        Object.keys(apiErrors).forEach((key) => {
+          mapped[key] = Array.isArray(apiErrors[key]) ? apiErrors[key][0] : apiErrors[key]
+        })
+        if (err.response.data.message && !Object.keys(mapped).length) {
+          mapped.general = err.response.data.message
+        }
+        setErrors(mapped)
+      } else {
+        setErrors({ general: err.response?.data?.message || 'حدث خطأ في الاتصال، حاول مرة أخرى' })
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleDemoLogin = () => {
+  const handleDemoLogin = async () => {
     setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      onLogin({
-        name: 'أحمد كمال',
-        email: 'ahmed@sehatek.ai',
+    setErrors({})
+    try {
+      const { data } = await authApi.login({
+        email: 'demo@sehatek.ai',
+        password: 'password',
       })
-    }, 400)
+      localStorage.setItem('sehatek_token', data.token)
+      onLogin({
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+      })
+    } catch (err) {
+      setErrors({ general: err.response?.data?.message || 'تعذر تسجيل الدخول التجريبي' })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const switchMode = (newMode) => {
@@ -163,7 +210,15 @@ export default function Auth({ onLogin, theme, toggleTheme }) {
 
           <form onSubmit={handleSubmit} className="auth-form" noValidate>
             {/* Full Name field (Only in Sign Up) */}
-            {mode === 'signup' && (
+{errors.general && (
+          <div className="form-group">
+            <span className="error-message" style={{ display: 'block', textAlign: 'center' }}>
+              {errors.general}
+            </span>
+          </div>
+        )}
+
+        {mode === 'signup' && (
               <div className="form-group">
                 <label htmlFor="auth-name">الاسم الكامل</label>
                 <div className={`input-field-wrapper ${errors.name ? 'error' : ''}`}>
@@ -310,13 +365,7 @@ export default function Auth({ onLogin, theme, toggleTheme }) {
               )}
             </button>
 
-            {/* Quick Demo Access Button */}
-            <button type="button" className="demo-login-btn" onClick={handleDemoLogin} disabled={isLoading}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="demo-icon">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-              </svg>
-              <span>دخول سريع بحساب تجريبي</span>
-            </button>
+
           </form>
 
           {/* Footer Switcher Link */}

@@ -1,60 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Auth from './Auth'
+import { authApi, conversationsApi, messagesApi } from './api'
 import './App.css'
-
-const INITIAL_HISTORY = [
-  { id: 1, title: 'وجع في البطن و صداع' },
-  { id: 2, title: 'حاسس بوجع في القولون' },
-  { id: 3, title: 'مليش نفس آكل' },
-  { id: 4, title: 'استشارة بخصوص ضغط الدم' },
-]
-
-const SAMPLE_CONVERSATIONS = {
-  1: [
-    {
-      id: 'm1',
-      sender: 'bot',
-      title: 'أهلاً، أنا موجود هنا لخدمتك',
-      text: 'لو سمحت قولي حاسس بإيه النهاردة؟',
-      time: '10:30 ص',
-    },
-    {
-      id: 'm2',
-      sender: 'user',
-      text: 'حاسس بصداع وفقدان للتوازن ووجع في القولون',
-      time: '10:31 ص',
-    },
-    {
-      id: 'm3',
-      sender: 'bot',
-      title: 'تحليل الأعراض الأولية',
-      text: 'سلامتك أولاً. الصداع المصحوب بعدم الاتزان واضطرابات القولون قد يكون ناتجاً عن إجهاد عصبي، أو جفاف، أو تهيج في الجهاز الهضمي. هل تناولت كمية كافية من الماء اليوم؟ وهل يوجد غثيان أو ارتفاع في درجة الحرارة؟',
-      time: '10:32 ص',
-    },
-  ],
-  2: [
-    {
-      id: 'm1',
-      sender: 'bot',
-      title: 'أهلاً بك في صحتك',
-      text: 'كيف يمكنني مساعدتك اليوم؟',
-      time: '09:15 ص',
-    },
-    {
-      id: 'm2',
-      sender: 'user',
-      text: 'حاسس بوجع في القولون وانتفاخ مستمر بعد الوجبات',
-      time: '09:16 ص',
-    },
-    {
-      id: 'm3',
-      sender: 'bot',
-      title: 'إرشادات الجهاز الهضمي',
-      text: 'ينصح بالابتعاد عن البقوليات والمشروبات الغازية حالياً، وشرب شاي النعناع أو الينسون الدافئ. إذا استمر الألم ينصح باستشارة أخصائي باطنة.',
-      time: '09:18 ص',
-    },
-  ],
-}
 
 const QUICK_PROMPTS = [
   '🩺 حاسس بصداع شديد وإرهاق',
@@ -90,15 +37,45 @@ function App() {
     return 'light'
   })
 
-  const [activeChatId, setActiveChatId] = useState(1)
-  const [messages, setMessages] = useState(SAMPLE_CONVERSATIONS[1] || [])
+  const [conversations, setConversations] = useState([])
+  const [activeChatId, setActiveChatId] = useState(null)
+  const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isRecentFlyoutOpen, setIsRecentFlyoutOpen] = useState(false)
+  const [isLoadingChats, setIsLoadingChats] = useState(false)
   const messagesEndRef = useRef(null)
   const searchInputRef = useRef(null)
+  const abortRef = useRef(null)
+
+  const loadConversations = async () => {
+    if (!currentUser) return
+    setIsLoadingChats(true)
+    try {
+      const { data } = await conversationsApi.list()
+      setConversations(data || [])
+    } catch {
+      setConversations([])
+    } finally {
+      setIsLoadingChats(false)
+    }
+  }
+
+  const mapMessages = (conversation) => {
+    return (conversation.messages || []).map((msg) => ({
+      id: msg.id || `${msg.role}-${Date.now()}-${Math.random()}`,
+      sender: msg.role === 'assistant' ? 'bot' : 'user',
+      title: msg.role === 'assistant' ? 'استجابة المساعد الطبي' : undefined,
+      text: msg.content,
+      time: new Date(msg.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    }))
+  }
+
+  useEffect(() => {
+    loadConversations()
+  }, [currentUser])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -114,10 +91,19 @@ function App() {
     localStorage.setItem('sehatek_user', JSON.stringify(user))
   }
 
-  const handleLogout = () => {
-    if (window.confirm('هل تريد تسجيل الخروج والعودة لصفحة الدخول؟')) {
+  const handleLogout = async () => {
+    if (!window.confirm('هل تريد تسجيل الخروج والعودة لصفحة الدخول؟')) return
+    try {
+      await authApi.logout()
+    } catch {
+      // ignore logout errors
+    } finally {
       setCurrentUser(null)
+      setConversations([])
+      setActiveChatId(null)
+      setMessages([])
       localStorage.removeItem('sehatek_user')
+      localStorage.removeItem('sehatek_token')
     }
   }
 
@@ -150,45 +136,147 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const handleSelectChat = (id) => {
+  const getConversationTitle = (conversation) => {
+    if (!conversation) return 'محادثة جديدة'
+    const firstUser = (conversation.messages || []).find((m) => m.role === 'user')
+    if (firstUser) {
+      const title = firstUser.content.slice(0, 40)
+      return title.length < firstUser.content.length ? title + '...' : title
+    }
+    return `محادثة #${conversation.id}`
+  }
+
+  const handleSelectChat = async (id) => {
     setActiveChatId(id)
-    setMessages(SAMPLE_CONVERSATIONS[id] || [
-      {
-        id: 'init',
-        sender: 'bot',
-        title: 'أهلاً، أنا موجود هنا لخدمتك',
-        text: 'كيف يمكنني مساعدتك في هذه المحادثة؟',
-        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      },
-    ])
+    setMessages([])
     setIsSearchOpen(false)
     setIsRecentFlyoutOpen(false)
     if (window.innerWidth <= 900) {
       setIsSidebarOpen(false)
     }
+    try {
+      const { data } = await conversationsApi.get(id)
+      setMessages(mapMessages(data))
+    } catch {
+      setMessages([
+        {
+          id: 'load-error',
+          sender: 'bot',
+          title: 'تنبيه',
+          text: 'تعذر تحميل المحادثة، حاول مرة أخرى.',
+          time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        },
+      ])
+    }
   }
 
-  const handleNewChat = () => {
-    const newId = Date.now()
-    setActiveChatId(newId)
-    setMessages([
-      {
-        id: 'new_init',
-        sender: 'bot',
-        title: 'محادثة صحية جديدة',
-        text: 'أهلاً بك! تفضل بوصف الأعراض التي تشعر بها أو اسأل أي سؤال طبي استرشادي.',
-        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-      },
-    ])
+  const handleNewChat = async () => {
+    setIsSearchOpen(false)
     setIsRecentFlyoutOpen(false)
+    try {
+      const { data } = await conversationsApi.create()
+      setConversations((prev) => [data, ...prev])
+      setActiveChatId(data.id)
+      setMessages(mapMessages(data))
+    } catch {
+      const tempId = `temp-${Date.now()}`
+      setActiveChatId(tempId)
+      setMessages([
+        {
+          id: 'new_init',
+          sender: 'bot',
+          title: 'محادثة صحية جديدة',
+          text: 'أهلاً بك! تفضل بوصف الأعراض التي تشعر بها أو اسأل أي سؤال طبي استرشادي.',
+          time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        },
+      ])
+    }
     if (window.innerWidth <= 900) {
       setIsSidebarOpen(false)
     }
   }
 
-  const handleSend = (textToSend = inputText) => {
+  const readStream = async (response, botMsgId) => {
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+    let fullText = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('data:')) continue
+        const jsonStr = trimmed.slice(5).trim()
+        if (!jsonStr) continue
+        try {
+          const parsed = JSON.parse(jsonStr)
+          if (parsed.event === 'chunk' && parsed.payload?.content) {
+            fullText += parsed.payload.content
+            setMessages((prev) =>
+              prev.map((msg) => (msg.id === botMsgId ? { ...msg, text: fullText } : msg))
+            )
+          } else if (parsed.event === 'done') {
+            const aiResponse = parsed.payload?.ai_response
+            if (aiResponse?.message) {
+              fullText = aiResponse.message
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === botMsgId
+                    ? { ...msg, text: fullText, specialty: aiResponse.specialty, urgency: aiResponse.urgency }
+                    : msg
+                )
+              )
+            }
+          }
+        } catch {
+          // ignore malformed events
+        }
+      }
+    }
+
+    setIsTyping(false)
+    loadConversations()
+  }
+
+  const handleSend = async (textToSend = inputText) => {
     const text = textToSend.trim()
     if (!text || isTyping) return
+
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
+    }
+
+    let conversationId = activeChatId
+    if (!conversationId || String(conversationId).startsWith('temp-')) {
+      setIsTyping(true)
+      try {
+        const { data } = await conversationsApi.create()
+        conversationId = data.id
+        setActiveChatId(conversationId)
+        setConversations((prev) => [data, ...prev])
+      } catch (err) {
+        setIsTyping(false)
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error-${Date.now()}`,
+            sender: 'bot',
+            title: 'خطأ',
+            text: 'تعذر إنشاء محادثة جديدة، تحقق من الاتصال بالخادم.',
+            time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+          },
+        ])
+        return
+      }
+    }
 
     const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
     const userMsg = {
@@ -197,47 +285,54 @@ function App() {
       text,
       time: now,
     }
+    const botMsgId = `bot-${Date.now()}`
+    const botTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    const initialBotMsg = {
+      id: botMsgId,
+      sender: 'bot',
+      title: 'استجابة المساعد الطبي',
+      text: '',
+      time: botTime,
+    }
 
-    setMessages((prev) => [...prev, userMsg])
+    setMessages((prev) => [...prev, userMsg, initialBotMsg])
     setInputText('')
     setIsTyping(true)
 
-    // ChatGPT-style waiting time with 3 dots loading (1.2s delay)
-    setTimeout(() => {
-      setIsTyping(false)
-      
-      const fullResponse = `شكراً لمشاركتك هذه الأعراض. بناءً على وصفك لـ "${text}"، نوصي بأخذ قسط من الراحة وشرب كميات كافية من الماء والسوائل الدافئة. إذا استمرت الأعراض أو شعرت بأي تفاقم، يُرجى استشارة الطبيب المختص أو التوجه لأقرب مركز صحي فوراً.`
-      const botMsgId = `bot-${Date.now()}`
-      const botTime = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    const controller = new AbortController()
+    abortRef.current = controller
 
-      const initialBotMsg = {
-        id: botMsgId,
-        sender: 'bot',
-        title: 'استجابة المساعد الطبي',
-        text: '',
-        time: botTime,
+    try {
+      const response = await messagesApi.sendToConversation(conversationId, text, controller.signal)
+      if (!response.ok) {
+        let errorText = 'حدث خطأ أثناء إرسال الرسالة.'
+        try {
+          const errData = await response.json()
+          errorText = errData.message || errorText
+        } catch {
+          errorText = response.statusText || errorText
+        }
+        throw new Error(errorText)
       }
 
-      setMessages((prev) => [...prev, initialBotMsg])
-
-      const words = fullResponse.split(' ')
-      let currentWordIndex = 0
-
-      const streamInterval = setInterval(() => {
-        currentWordIndex++
-        const currentText = words.slice(0, currentWordIndex).join(' ')
-
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMsgId ? { ...msg, text: currentText } : msg
-          )
+      await readStream(response, botMsgId)
+    } catch (err) {
+      if (err.name === 'AbortError') return
+      setIsTyping(false)
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMsgId
+            ? {
+                ...msg,
+                text: err.message || 'تعذر الحصول على رد، حاول مرة أخرى.',
+                title: 'خطأ',
+              }
+            : msg
         )
-
-        if (currentWordIndex >= words.length) {
-          clearInterval(streamInterval)
-        }
-      }, 35)
-    }, 1200)
+      )
+    } finally {
+      abortRef.current = null
+    }
   }
 
   const handleKeyDown = (e) => {
@@ -247,8 +342,8 @@ function App() {
     }
   }
 
-  const filteredHistory = INITIAL_HISTORY.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredHistory = conversations.filter((item) =>
+    getConversationTitle(item).toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const userInitials = currentUser?.name
@@ -335,14 +430,14 @@ function App() {
                   <button className="close-mini-btn" onClick={() => setIsRecentFlyoutOpen(false)}>×</button>
                 </div>
                 <div className="recent-flyout-list">
-                  {INITIAL_HISTORY.map((item) => (
+                  {(conversations.length ? conversations : []).slice(0, 8).map((item) => (
                     <div
                       key={item.id}
                       className={`recent-flyout-item ${activeChatId === item.id ? 'active' : ''}`}
                       onClick={() => handleSelectChat(item.id)}
                     >
                       <span className="history-dot"></span>
-                      <span className="recent-flyout-title">{item.title}</span>
+                      <span className="recent-flyout-title">{getConversationTitle(item)}</span>
                     </div>
                   ))}
                 </div>
@@ -395,37 +490,27 @@ function App() {
             <div className="chat-history">
               <div className="history-header-row">
                 <h3 className="history-title">تاريخ المحادثات</h3>
-                <span className="history-count">{INITIAL_HISTORY.length}</span>
+                <span className="history-count">{conversations.length}</span>
               </div>
               <div className="history-list">
-                {INITIAL_HISTORY.map((item) => (
+                {isLoadingChats && conversations.length === 0 && (
+                  <div className="history-item"><span className="history-item-text">جاري التحميل...</span></div>
+                )}
+                {conversations.map((item) => (
                   <div
                     key={item.id}
                     className={`history-item ${activeChatId === item.id ? 'active' : ''}`}
                     onClick={() => handleSelectChat(item.id)}
                   >
                     <span className="history-dot"></span>
-                    <span className="history-item-text">{item.title}</span>
+                    <span className="history-item-text">{getConversationTitle(item)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="bottom-section">
-              <div className="emergency-card">
-                <div className="emergency-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.5a16 16 0 0 0 6 6l.89-.89a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z" />
-                  </svg>
-                </div>
-                <div className="emergency-content">
-                  <h4>طوارئ؟</h4>
-                  <p>ابحث عن رعاية فورية</p>
-                </div>
-                <svg className="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-              </div>
+
 
               {/* Profile Card with Logout capability */}
               <div className="profile-card" onClick={handleLogout} title="انقر لتسجيل الخروج">
@@ -612,7 +697,7 @@ function App() {
                         <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
                       </svg>
                       <div className="result-text-block">
-                        <span className="result-title">{item.title}</span>
+                        <span className="result-title">{getConversationTitle(item)}</span>
                         <span className="result-subtitle">محادثة سابقة</span>
                       </div>
                       <span className="jump-arrow">←</span>
