@@ -854,6 +854,39 @@
   font-weight: 600;
 }
 
+.header-avatar-wrap {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app.dark .header-avatar-wrap {
+  background: #181818;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.header-avatar-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.header-avatar-wrap .status-dot {
+  position: absolute;
+  bottom: -2px;
+  left: -2px;
+  width: 8px;
+  height: 8px;
+}
+
 /* ====================================================
    Chat Messages Stream
 ==================================================== */
@@ -896,12 +929,21 @@
   flex-shrink: 0;
   border: 1px solid var(--primary-border);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .app.dark .bot-avatar {
   background: #1e1e1e;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #ffffff;
+}
+
+.bot-avatar-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  display: block;
 }
 
 .bot-avatar svg {

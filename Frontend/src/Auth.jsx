@@ -343,6 +343,7 @@ export default function Auth({ onLogin, theme, toggleTheme }) {
         <div className="auth-showcase">
           <div className="showcase-content">
             <div className="showcase-badge">
+              <img src="/ai-avatar.png" alt="AI" className="showcase-avatar-icon" />
               <span className="pulse-dot-green"></span>
               <span>الجيل الجديد من الرعاية الصحية الذكية</span>
             </div>

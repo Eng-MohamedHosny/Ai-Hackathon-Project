@@ -505,6 +505,13 @@
   width: fit-content;
 }
 
+.showcase-avatar-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
+
 .pulse-dot-green {
   width: 8px;
   height: 8px;

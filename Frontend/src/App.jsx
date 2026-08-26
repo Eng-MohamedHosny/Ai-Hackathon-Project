@@ -447,7 +447,10 @@ function App() {
           {/* Top Header */}
           <header className="chat-header">
             <div className="chat-header-center">
-              <div className="status-dot"></div>
+              <div className="header-avatar-wrap">
+                <img src="/ai-avatar.png" alt="المساعد الذكي" className="header-avatar-img" />
+                <div className="status-dot"></div>
+              </div>
               <div className="chat-header-titles">
                 <h2>المساعد الصحي الذكي</h2>
                 <span className="online-status">جاهز للمساعدة</span>
@@ -490,11 +493,7 @@ function App() {
                 {msg.sender === 'bot' ? (
                   <div className="bot-message">
                     <div className="bot-avatar">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="11" width="18" height="10" rx="2" />
-                        <circle cx="12" cy="7" r="4" />
-                        <path d="M8 11V9a4 4 0 0 1 8 0v2" />
-                      </svg>
+                      <img src="/ai-avatar.png" alt="المساعد الطبي" className="bot-avatar-img" />
                     </div>
                     <div className="message-bubble bot-bubble">
                       {msg.title && <p className="bot-title">{msg.title}</p>}
@@ -516,11 +515,7 @@ function App() {
             {isTyping && (
               <div className="bot-message typing-indicator-row">
                 <div className="bot-avatar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="10" rx="2" />
-                    <circle cx="12" cy="7" r="4" />
-                    <path d="M8 11V9a4 4 0 0 1 8 0v2" />
-                  </svg>
+                  <img src="/ai-avatar.png" alt="المساعد الطبي" className="bot-avatar-img" />
                 </div>
                 <div className="message-bubble bot-bubble typing-bubble">
                   <div className="typing-dots">
