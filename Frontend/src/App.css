@@ -933,7 +933,7 @@
 }
 
 .app.dark .bot-avatar {
-  background: #1e1e1e;
+  background: #262626;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
@@ -970,8 +970,8 @@
 }
 
 .app.dark .bot-bubble {
-  background: #141414;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #574f4f;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffff;
 }
 
@@ -980,6 +980,10 @@
   font-weight: 700;
   font-size: 0.95rem;
   margin-bottom: 0.35rem;
+}
+
+.app.dark .bot-title {
+  color: #ffffff;
 }
 
 .bot-text {
@@ -997,6 +1001,27 @@
   margin-top: 0.35rem;
 }
 
+/* Links inside chat bubbles */
+.chat-link {
+  color: var(--primary-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+  transition: opacity 0.2s ease;
+}
+
+.chat-link:hover {
+  opacity: 0.8;
+}
+
+.app.dark .bot-bubble .chat-link {
+  color: #93c5fd;
+}
+
+.app.dark .user-bubble .chat-link {
+  color: #93c5fd;
+}
+
 /* User Message */
 .user-message {
   display: flex;
@@ -1011,18 +1036,19 @@
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
 }
 
-/* Black & White Dark Mode User Bubble */
-.app.dark .user-bubble {
-  background: #262626;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
+/* Ensure user bubble text stays white */
+.user-bubble .bot-text,
 .user-bubble p {
+  color: #ffffff !important;
   margin: 0;
   font-weight: 500;
   line-height: 1.55;
+}
+
+.app.dark .user-bubble {
+  background: #262626;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }
 
 .timestamp {

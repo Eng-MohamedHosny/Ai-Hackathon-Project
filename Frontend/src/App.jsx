@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Auth from './Auth'
+import MessageText from './MessageText'
 import { authApi, conversationsApi, messagesApi } from './api'
 import './App.css'
 
@@ -582,14 +583,14 @@ function App() {
                     </div>
                     <div className="message-bubble bot-bubble">
                       {msg.title && <p className="bot-title">{msg.title}</p>}
-                      <p className="bot-text">{msg.text}</p>
+                      <p className="bot-text"><MessageText text={msg.text} /></p>
                       <span className="timestamp bot-timestamp">{msg.time}</span>
                     </div>
                   </div>
                 ) : (
                   <div className="user-message">
                     <div className="message-bubble user-bubble">
-                      <p>{msg.text}</p>
+                      <p><MessageText text={msg.text} /></p>
                       <span className="timestamp">{msg.time}</span>
                     </div>
                   </div>
