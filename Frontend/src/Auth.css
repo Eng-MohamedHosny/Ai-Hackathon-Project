@@ -250,7 +250,13 @@
 
 .app.dark .input-field-wrapper:focus-within {
   border-color: #ffffff;
+  background: #000000;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.app.dark .input-field-wrapper {
+  background: #000000;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .input-field-wrapper.error {
@@ -265,6 +271,10 @@
   flex-shrink: 0;
 }
 
+.app.dark .field-icon {
+  color: #ffffff;
+}
+
 .input-field-wrapper input {
   flex: 1;
   border: none;
@@ -275,8 +285,16 @@
   color: var(--text-main);
 }
 
+.app.dark .input-field-wrapper input {
+  color: #ffffff;
+}
+
 .input-field-wrapper input::placeholder {
   color: var(--text-light);
+}
+
+.app.dark .input-field-wrapper input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .eye-toggle-btn {
@@ -349,7 +367,7 @@
   width: 100%;
   padding: 0.95rem 1.5rem;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #ffffff;
   font-size: 1rem;
   font-weight: 700;
@@ -362,20 +380,9 @@
   transition: all 0.2s ease;
 }
 
-.app.dark .auth-submit-btn {
-  background: #ffffff;
-  color: #000000;
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
-}
-
 .auth-submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
-}
-
-.app.dark .auth-submit-btn:hover:not(:disabled) {
-  background: #e5e5e5;
-  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.25);
 }
 
 .auth-submit-btn:active:not(:disabled) {
