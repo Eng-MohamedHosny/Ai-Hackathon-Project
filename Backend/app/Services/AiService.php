@@ -29,7 +29,7 @@ class AiService
 
         $this->client = OpenAI::factory()
             ->withApiKey($apiKey)
-            ->withBaseUri(rtrim($baseUrl, '/').'/')
+            ->withBaseUri(rtrim($baseUrl, '/'))
             ->make();
     }
 
@@ -95,7 +95,7 @@ class AiService
 
             return $this->parseModel1Response($content);
         } catch (Exception $e) {
-            Log::error('Model 1 (Kimi) API error: '.$e->getMessage());
+            Log::error('Model 1 (Kimi) API error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
 
             return $this->fallbackExtraction();
         }
@@ -123,7 +123,7 @@ class AiService
 
             return $this->parseModel2Response($content, $extraction);
         } catch (Exception $e) {
-            Log::error('Model 2 (Luna) API error: '.$e->getMessage());
+            Log::error('Model 2 (Luna) API error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
 
             return $this->fallbackFromExtraction($extraction);
         }
@@ -199,9 +199,16 @@ PROMPT;
      */
     private function parseModel1Response(string $content): array
     {
-        $decoded = json_decode($content, true);
+        $clean = trim($content);
+        if (preg_match('/\{[\s\S]*\}/', $clean, $matches)) {
+            $clean = $matches[0];
+        }
+
+        $decoded = json_decode($clean, true);
 
         if (! is_array($decoded)) {
+            Log::warning('Model 1 JSON decode failed. Content: '.substr($content, 0, 500));
+
             return $this->fallbackExtraction();
         }
 
@@ -290,9 +297,16 @@ PROMPT;
      */
     private function parseModel2Response(string $content, array $extraction): array
     {
-        $decoded = json_decode($content, true);
+        $clean = trim($content);
+        if (preg_match('/\{[\s\S]*\}/', $clean, $matches)) {
+            $clean = $matches[0];
+        }
+
+        $decoded = json_decode($clean, true);
 
         if (! is_array($decoded)) {
+            Log::warning('Model 2 JSON decode failed. Content: '.substr($content, 0, 500));
+
             return $this->fallbackFromExtraction($extraction);
         }
 
@@ -333,17 +347,20 @@ PROMPT;
         }
 
         if ($extraction['clarification_needed']['needed'] ?? false) {
+            $questions = $extraction['clarification_needed']['questions_ar'] ?? [];
+            $message = ! empty($questions) ? $questions[0] : 'تمام، ممكن تشرح الأعراض بالتفصيل أكتر؟';
+
             return [
-                'message' => 'تمام، خليني أفهم أكتر.',
+                'message' => $message,
                 'specialty' => null,
                 'urgency' => 'normal',
                 'conversation_complete' => false,
-                'follow_up_questions' => $extraction['clarification_needed']['questions_ar'] ?? ['ممكن تشرح الأعراض أكتر؟'],
+                'follow_up_questions' => $questions,
             ];
         }
 
         return [
-            'message' => 'تمام، خليني أفهم أكتر.',
+            'message' => 'تمام، ممكن توضحلي أكتر سنك ومكان الألم بالظبط وبدأ من إمتى؟',
             'specialty' => null,
             'urgency' => 'normal',
             'conversation_complete' => false,
