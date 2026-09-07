@@ -88,16 +88,32 @@ class AiService
                 'model' => $this->kimiModel,
                 'messages' => $messages,
                 'response_format' => ['type' => 'json_object'],
-                'temperature' => 0.3,
+                'temperature' => 0.2,
             ]);
 
             $content = $response->choices[0]->message->content ?? '';
 
             return $this->parseModel1Response($content);
         } catch (Exception $e) {
-            Log::error('Model 1 (Kimi) API error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
+            Log::warning('Model 1 (Kimi) error: '.$e->getMessage().', retrying with flash-lite...');
 
-            return $this->fallbackExtraction();
+            try {
+                usleep(400000);
+                $response = $this->client->chat()->create([
+                    'model' => 'gemini-2.5-flash-lite',
+                    'messages' => $messages,
+                    'response_format' => ['type' => 'json_object'],
+                    'temperature' => 0.2,
+                ]);
+
+                $content = $response->choices[0]->message->content ?? '';
+
+                return $this->parseModel1Response($content);
+            } catch (Exception $e2) {
+                Log::error('Model 1 retry failed: '.$e2->getMessage());
+
+                return $this->fallbackExtraction();
+            }
         }
     }
 
@@ -108,24 +124,42 @@ class AiService
      */
     private function generateFinalResponse(array $history, array $extraction): array
     {
+        $messages = [
+            ['role' => 'system', 'content' => $this->model2Prompt()],
+            ['role' => 'user', 'content' => $this->model2UserInput($history, $extraction)],
+        ];
+
         try {
             $response = $this->client->chat()->create([
                 'model' => $this->lunaModel,
-                'messages' => [
-                    ['role' => 'system', 'content' => $this->model2Prompt()],
-                    ['role' => 'user', 'content' => $this->model2UserInput($history, $extraction)],
-                ],
+                'messages' => $messages,
                 'response_format' => ['type' => 'json_object'],
-                'temperature' => 0.6,
+                'temperature' => 0.5,
             ]);
 
             $content = $response->choices[0]->message->content ?? '';
 
             return $this->parseModel2Response($content, $extraction);
         } catch (Exception $e) {
-            Log::error('Model 2 (Luna) API error: '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
+            Log::warning('Model 2 (Luna) error: '.$e->getMessage().', retrying with flash-lite...');
 
-            return $this->fallbackFromExtraction($extraction);
+            try {
+                usleep(400000);
+                $response = $this->client->chat()->create([
+                    'model' => 'gemini-2.5-flash-lite',
+                    'messages' => $messages,
+                    'response_format' => ['type' => 'json_object'],
+                    'temperature' => 0.5,
+                ]);
+
+                $content = $response->choices[0]->message->content ?? '';
+
+                return $this->parseModel2Response($content, $extraction);
+            } catch (Exception $e2) {
+                Log::error('Model 2 retry failed: '.$e2->getMessage());
+
+                return $this->fallbackFromExtraction($extraction);
+            }
         }
     }
 
@@ -156,18 +190,19 @@ class AiService
     private function model1Prompt(): string
     {
         return <<<'PROMPT'
-You are a clinical symptom-extraction engine for a medical navigation app. Your job is to read a patient's free-text description (in Arabic) and convert it into structured data. You are NOT talking to the patient directly and your output is NEVER shown to them — it is consumed by another backend system. You are not making a diagnosis; you are structuring information so a routing system can pick the right specialist.
+You are a clinical symptom-extraction engine for a medical navigation app. Your job is to read the patient's conversation history (in Arabic) and extract structured medical data cumulatively from all user messages. You are NOT talking to the patient directly and your output is NEVER shown to them.
 
 ## Output contract
 Respond with ONLY a single JSON object, no prose, no markdown fences, matching this schema:
 
 {
   "symptoms": [
-    { "raw_text_ar": "string (patient's own words)", "normalized": "string (clinical term, Arabic)", "onset": "string|null", "duration": "string|null", "severity": "mild|moderate|severe|unknown" }
+    { "raw_text_ar": "string", "normalized": "string", "onset": "string|null", "duration": "string|null", "severity": "mild|moderate|severe|unknown" }
   ],
   "patient_context": {
     "age_group": "infant|child|adolescent|adult|elderly|unknown",
     "gender": "male|female|unknown",
+    "location": "string|unknown",
     "relevant_history": ["string"]
   },
   "possible_conditions": [
@@ -181,16 +216,16 @@ Respond with ONLY a single JSON object, no prose, no markdown fences, matching t
     "needed": true|false,
     "questions_ar": ["string"]
   },
+  "is_off_topic": true|false,
   "confidence": "low|medium|high"
 }
 
 ## Rules
-1. Extract only what the patient stated or clearly implied. Do not invent symptoms, history, or demographics.
-2. "possible_conditions" is an internal differential for routing purposes only — never phrase it as a confirmed diagnosis, and never soften this into a message meant for the patient. It stays in the JSON.
-3. Red flags — always check for and flag emergency indicators regardless of what else is going on: chest pain w/ shortness of breath, signs of stroke (facial droop, slurred speech, limb weakness), severe uncontrolled bleeding, difficulty breathing, loss of consciousness, suspected poisoning, high fever with stiff neck in a child, severe abdominal pain with rigidity, signs of anaphylaxis, active suicidal ideation. If any are present, set red_flags.present = true and describe them plainly in details.
-4. If the description is too vague to produce a reasonably confident output (e.g. "I don't feel well"), set clarification_needed.needed = true and write 1–3 short, specific follow-up questions in Arabic that would most narrow things down (location of pain, duration, fever, etc.). Still fill in whatever fields you can.
-5. Never output anything outside the JSON object — no greeting, no explanation, no disclaimers.
-6. Do not guess a specific disease with unwarranted confidence. If symptoms are consistent with multiple unrelated systems (e.g. could be cardiac or could be musculoskeletal), list both and let likelihood reflect that uncertainty.
+1. Accumulate all symptoms and patient context mentioned across the entire conversation history. If the user confirms, says 'هما نفس الأعراض', or 'لا مفيش أعراض تاني', DO NOT wipe previously extracted symptoms — preserve everything mentioned earlier.
+2. If the user's latest message is completely off-topic or unrelated to health/medical matters (e.g. general trivia like 'أطول برج في العالم', greetings, banter), set is_off_topic = true.
+3. If enough symptoms or clinical context have already been gathered across the conversation to reasonably recommend a medical specialty, set clarification_needed.needed = false.
+4. Red flags — always check for and flag emergency indicators: sudden chest pain w/ shortness of breath, signs of stroke, severe uncontrolled bleeding, difficulty breathing, loss of consciousness, suspected poisoning, severe trauma. If any are present, set red_flags.present = true.
+5. Never output anything outside the JSON object.
 PROMPT;
     }
 
@@ -214,10 +249,11 @@ PROMPT;
 
         return [
             'symptoms' => $decoded['symptoms'] ?? [],
-            'patient_context' => $decoded['patient_context'] ?? ['age_group' => 'unknown', 'gender' => 'unknown', 'relevant_history' => []],
+            'patient_context' => $decoded['patient_context'] ?? ['age_group' => 'unknown', 'gender' => 'unknown', 'location' => 'unknown', 'relevant_history' => []],
             'possible_conditions' => $decoded['possible_conditions'] ?? [],
             'red_flags' => $decoded['red_flags'] ?? ['present' => false, 'details' => []],
             'clarification_needed' => $decoded['clarification_needed'] ?? ['needed' => false, 'questions_ar' => []],
+            'is_off_topic' => (bool) ($decoded['is_off_topic'] ?? false),
             'confidence' => $decoded['confidence'] ?? 'low',
         ];
     }
@@ -226,10 +262,11 @@ PROMPT;
     {
         return [
             'symptoms' => [],
-            'patient_context' => ['age_group' => 'unknown', 'gender' => 'unknown', 'relevant_history' => []],
+            'patient_context' => ['age_group' => 'unknown', 'gender' => 'unknown', 'location' => 'unknown', 'relevant_history' => []],
             'possible_conditions' => [],
             'red_flags' => ['present' => false, 'details' => []],
-            'clarification_needed' => ['needed' => true, 'questions_ar' => ['ممكن تشرح الأعراض بالتفصيل أكتر؟']],
+            'clarification_needed' => ['needed' => false, 'questions_ar' => []],
+            'is_off_topic' => false,
             'confidence' => 'low',
         ];
     }
@@ -237,29 +274,27 @@ PROMPT;
     private function model2Prompt(): string
     {
         return <<<'PROMPT'
-أنت مساعد ذكي للتوجيه الطبي بيتكلم بالعربي المصرية البسيطة. مهمتك مساعدة المستخدم يلاقي القسم الطبي المناسب. أنت مش دكتور ومش بتشخص أو تكتب علاج.
+أنت "صحتك AI"، مساعد ذكي وودود للتوجيه الطبي بيتكلم بالمصري البسيط السلس. مهمتك مساعدة المستخدم في توجيهه للعيادة أو التخصص الطبي المناسب بناءً على المحادثة كاملة. أنت مش دكتور ومش بتشخص أمراض محددة أو تكتب علاج.
 
-## مهماتك بالترتيب
-1. **أول معلومة مطلوبة**: لو مش عارف عمر المستخدم أو جنسه أو المدينة/المنطقة أو الأمراض المزمنة، اسأل سؤال واحد بس وودود:
-   "عشان أوجهك بشكل أفضل، ممكن تقولي عمرك، وجنسك، وإنت فين (مدينة/منطقة)، وهل عندك أمراض مزمنة؟"
-2. **الطوارئ**: لو red_flags موجودة، قول له يروح أقرب طوارئ فوراً. conversation_complete = true.
-3. **توضيح الأعراض**: لو عندك العمر والجنس والمدينة بس الأعراض مش واضحة، اسأل سؤال واحد بس يساعدك ترشح القسم.
-4. **لما تكون عندك معلومات كافية**: رشح قسم واحد فقط من: جراحة العظام، الباطنة، الجلدية، العيون، القلب، المخ والأعصاب، الأسنان، أنف وأذن وحنجرة، الأطفال، النساء والتوليد، المسالك البولية، الجراحة العامة، النفسية.
-5. **اقتراح دكاترة**: لما ترشح قسم ومعندك مدينة/منطقة، ضيف رابط بحث Google Maps بالصيغة:
+## قواعد التعامل:
+1. **لو كلام المستخدم مش طبي (Off-topic)**: زي أسئلة عامة (مثلاً: "إيه أطول برج في العالم")، رد بذوق وبساطة إنك مساعد طبي مخصص لتوجيه المرضى واستفساراتهم الصحية، واسأله لو عنده أي أعراض أو استفسار طبي حابب تساعده فيه. (department = null, conversation_complete = false).
+2. **سلاسة المحادثة وعدم التكرار**:
+   - لو المستخدم قال "هما نفس الأعراض" أو "مفيش أعراض تانية" أو كرر كلامه، إياك تسأله تاني عن الأعراض! اعتمد فوراً على الأعراض اللي قالها في أول المحادثة ورشح له التخصص المناسب.
+   - متكررش نفس السؤال مرتين أبداً في نفس المحادثة.
+3. **الطوارئ**: لو فيه red_flags أو ألم شديد في الصدر أو ضيق تنفس حاد، وجهه فوراً وبدون تأخير لأقرب طوارئ أو مستشفى. (urgency = "urgent", conversation_complete = true).
+4. **التوجيه للتخصص**: لما تتوفر معلومات كافية، رشح قسم واحد مناسب من الأقسام التالية:
+   [جراحة العظام، الباطنة، الجلدية، العيون، القلب، المخ والأعصاب، الأسنان، أنف وأذن وحنجرة، الأطفال، النساء والتوليد، المسالك البولية، الجراحة العامة، النفسية].
+5. **اقتراح العيادات**: لما ترشح تخصص ويكون عندك اسم المدينة أو المنطقة، ضيف في آخر الرسالة:
    "ممكن تدور على دكاترة [القسم] قريب منك من هنا: https://www.google.com/maps/search/دكتور+[القسم]+في+[المدينة/المنطقة]"
-6. **لو سألك عن مرض أو علاج**: رد: "أنا مساعد ذكي للتوجيه بس، التشخيص والعلاج من اختصاص الدكتور. الأفضل تتوجه لطبيب متخصص يفحصك كويس."
-
-## قواعد
-- متكتبش اسم مرض.
-- متكتبش دواء أو علاج.
-- متقولش "عندك ...".
-- سؤال واحد أو اثنين في الرد — مش أكتر.
-- الكلام قصير وودود.
+6. **الأسلوب**:
+   - الكلام مصري طبيعي وسلس ومريح للمريض، مش روبوتي.
+   - لو محتاج تسأل، اسأل سؤال واحد بس وواضح وبلاش أسئلة كتير ورا بعض.
+   - متكتبش تشخيص قاطع لمرض ولا تكتب أسماء أدوية.
 
 ## صيغة الرد
 Respond with ONLY a JSON object:
 {
-  "message": "string (الرسالة بالعربي المصرية)",
+  "message": "string (الرسالة بالعربي المصرية الطبيعية)",
   "department": "string أو null",
   "urgency": "normal" أو "urgent",
   "conversation_complete": true أو false,
@@ -338,7 +373,7 @@ PROMPT;
     {
         if ($extraction['red_flags']['present'] ?? false) {
             return [
-                'message' => 'الأعراض اللي وصفتها ممكن تكون خطيرة. لو حالتك بتتطور بسرعة، توجه لأقرب مستشفى أو اتصل بالطوارئ دلوقتي.',
+                'message' => 'الأعراض دي ممكن تكون طارئة ومحتاجة فحص فوري. لو حالتك بتتطور بسرعة، توجه لأقرب مستشفى أو اتصل بالطوارئ دلوقتي.',
                 'specialty' => null,
                 'urgency' => 'urgent',
                 'conversation_complete' => true,
@@ -346,12 +381,20 @@ PROMPT;
             ];
         }
 
-        if ($extraction['clarification_needed']['needed'] ?? false) {
-            $questions = $extraction['clarification_needed']['questions_ar'] ?? [];
-            $message = ! empty($questions) ? $questions[0] : 'تمام، ممكن تشرح الأعراض بالتفصيل أكتر؟';
-
+        if (! empty($extraction['possible_conditions'])) {
             return [
-                'message' => $message,
+                'message' => 'سلامتك ألف سلامة. بناءً على الأعراض اللي وضحتها، الأنسب فحص حالتك عند طبيب باطنة أو ممارس عام للتأكد من سلامتك.',
+                'specialty' => 'internal_medicine',
+                'urgency' => 'normal',
+                'conversation_complete' => true,
+                'follow_up_questions' => [],
+            ];
+        }
+
+        if (! empty($extraction['clarification_needed']['questions_ar'])) {
+            $questions = $extraction['clarification_needed']['questions_ar'];
+            return [
+                'message' => $questions[0],
                 'specialty' => null,
                 'urgency' => 'normal',
                 'conversation_complete' => false,
@@ -360,7 +403,7 @@ PROMPT;
         }
 
         return [
-            'message' => 'تمام، ممكن توضحلي أكتر سنك ومكان الألم بالظبط وبدأ من إمتى؟',
+            'message' => 'أنا مساعدك الطبي الذكي لتوجيهك للقسم والعيادة المناسبة. لو عندك أي أعراض أو استفسار صحي تحب نشاركه، قولي وأنا معاك.',
             'specialty' => null,
             'urgency' => 'normal',
             'conversation_complete' => false,
