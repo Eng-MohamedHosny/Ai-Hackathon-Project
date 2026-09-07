@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صحتك - عرض المشروع</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Kufi Arabic', 'Inter', sans-serif; overflow: hidden; background: #050505; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #525252; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #737373; }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            padding: 40px;
+        }
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+        .slide.exit-left {
+            opacity: 0;
+            transform: translateX(60px);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-orange {
+            background: linear-gradient(135deg, #f97316, #fb923c, #fdba74);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-green {
+            background: linear-gradient(135deg, #22c55e, #4ade80, #86efac);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gradient-text-purple {
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa, #c4b5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glow-blue { box-shadow: 0 0 60px rgba(59,130,246,0.15), 0 0 120px rgba(59,130,246,0.05); }
+        .glow-orange { box-shadow: 0 0 60px rgba(249,115,22,0.15), 0 0 120px rgba(249,115,22,0.05); }
+        .glow-green { box-shadow: 0 0 60px rgba(34,197,94,0.15), 0 0 120px rgba(34,197,94,0.05); }
+        .glow-purple { box-shadow: 0 0 60px rgba(139,92,246,0.15), 0 0 120px rgba(139,92,246,0.05); }
+
+        .card {
+            background: rgba(23,23,23,0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            transition: all 0.5s ease;
+        }
+        .card:hover {
+            border-color: rgba(255,255,255,0.12);
+            transform: translateY(-4px);
+        }
+
+        .step-line {
+            position: absolute;
+            top: 28px;
+            right: 28px;
+            left: 28px;
+            height: 2px;
+            background: rgba(255,255,255,0.05);
+        }
+        .step-line-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.8s ease;
+        }
+
+        .floating { animation: float 6s ease-in-out infinite; }
+        .floating-delay { animation: float 6s ease-in-out 2s infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0; }
+            100% { transform: scale(0.8); opacity: 0.5; }
+        }
+        .pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
+
+        @keyframes count-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .count-animate { animation: count-up 0.6s ease-out forwards; }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #f97316);
+            transition: width 0.5s ease;
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+        .nav-dot.active {
+            background: #3b82f6;
+            width: 24px;
+            border-radius: 4px;
+            box-shadow: 0 0 12px rgba(59,130,246,0.5);
+        }
+
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .flow-arrow {
+            position: relative;
+        }
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 12px solid rgba(59,130,246,0.5);
+        }
+
+        .slide-number {
+            position: fixed;
+            bottom: 30px;
+            left: 40px;
+            font-size: 13px;
+            color: #525252;
+            font-weight: 500;
+            font-family: 'Inter', monospace;
+            z-index: 50;
+        }
+
+        .team-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes typewriter {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        .typewriter {
+            overflow: hidden;
+            white-space: nowrap;
+            border-left: 2px solid #3b82f6;
+            animation: typewriter 2s steps(30) forwards, blink 0.8s step-end infinite alternate;
+        }
+        @keyframes blink { 50% { border-color: transparent; } }
+
+        .screenshot-card {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.5s ease;
+        }
+        .screenshot-card:hover {
+            border-color: rgba(59,130,246,0.3);
+            transform: scale(1.03);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .screenshot-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .keyboard-hint {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #404040;
+            z-index: 50;
+        }
+        .key {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 24px;
+            padding: 0 6px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 10px;
+            font-family: 'Inter', monospace;
+        }
+    </style>
+</head>
+<body class="bg-grid">
+
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar" style="width: 9.09%"></div>
+
+    <!-- Slide Number -->
+    <div class="slide-number" id="slideNumber">01 / 11</div>
+
+    <!-- Keyboard Hints -->
+    <div class="keyboard-hint">
+        <span class="key">←</span><span class="key">→</span> للتنقل
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-50" id="navDots"></div>
+
+    <!-- ========== SLIDE 1: TITLE ========== -->
+    <div class="slide active" data-slide="0">
+        <div class="text-center max-w-4xl mx-auto relative">
+            <!-- Glow Background -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px]"></div>
+            <div class="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-purple-500/5 rounded-full blur-[100px]"></div>
+            
+            <!-- Badge -->
+            <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                <span class="text-sm text-neutral-400 font-medium">مشروع مبتكر مدعوم بالذكاء الاصطناعي</span>
+            </div>
+
+            <!-- Logo Icon -->
+            <div class="mx-auto mb-8 w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/20 flex items-center justify-center floating">
+                <i data-lucide="heart-pulse" class="w-10 h-10 text-blue-400"></i>
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-6xl md:text-8xl font-black tracking-tight mb-6 leading-none">
+                <img src="4pJLU-Photoroom.png" alt="صحتك" class="w-56 md:w-80 max-w-full h-auto mx-auto object-contain">
+            </h1>
+            
+            <!-- Subtitle -->
+            <p class="text-xl md:text-2xl text-neutral-400 font-light leading-relaxed max-w-2xl mx-auto mb-10">
+                دليلك الذكي للوصول للقسم الطبي المناسب<br>
+                <span class="text-neutral-500">والأطباء الأقرب إليك</span>
+            </p>
+
+            <!-- CTA -->
+            <div class="flex items-center justify-center gap-4">
+                <button onclick="goToSlide(1)" class="px-8 py-3.5 bg-white text-black rounded-xl font-semibold text-sm hover:bg-neutral-200 transition-all flex items-center gap-2">
+                    اكتشف المشروع
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </button>
+                <button onclick="goToSlide(9)" class="px-8 py-3.5 bg-white/5 text-white rounded-xl font-semibold text-sm border border-white/10 hover:bg-white/10 transition-all">
+                    شاهد العرض
+                </button>
+            </div>
+
+            <!-- Tech Tags -->
+            <div class="flex items-center justify-center gap-3 mt-12 flex-wrap">
+                <span class="tag text-blue-400"><i data-lucide="bot" class="w-3.5 h-3.5"></i> AI Powered</span>
+                <span class="tag text-purple-400"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> آمن وموثوق</span>
+                <span class="tag text-green-400"><i data-lucide="zap" class="w-3.5 h-3.5"></i> فوري</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 2: THE PROBLEM ========== -->
+    <div class="slide" data-slide="1">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="text-sm font-semibold text-blue-400 mb-6">صحتك</div>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-blue-400 tracking-wider uppercase">01 — المشكلة</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                أعاني من ألم..<br><span class="text-neutral-500">لكن مين الدكتور المناسب؟</span>
+            </h2>
+            <p class="text-neutral-400 text-lg max-w-2xl mb-12 leading-relaxed">
+                كلنا مررنا بالموقف ده — نحس بأعراض ومش عارفين نروح لمين، نحجز عند مين، وفين أقرب عيادة متخصصة
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Problem 1 -->
+                <div class="card p-6 glow-orange">
+                    <div class="feature-icon bg-orange-500/10 mb-4">
+                        <i data-lucide="help-circle" class="w-6 h-6 text-orange-400"></i>
+                    </div>
+                    <h3 class="text-white font-bold text-lg mb-2">حيرة في التشخيص</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed">المريض مش بيقدر يحدد القسم المناسب — باطنة؟ أطفال؟ أنف وأذن؟</p>
+                </div>
+                <!-- Problem 2 -->
+                <div class="card p-6 glow-orange">
+                    <div class="feature-icon bg-orange-500/10 mb-4">
+                        <i data-lucide="map-pin-off" class="w-6 h-6 text-orange-400"></i>
+                    </div>
+                    <h3 class="text-white font-bold text-lg mb-2">صعوبة إيجاد دكتور قريب</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed">حتى لو عرف القسم، مش سهل تلاقي أقرب دكتور لمنطقتك ومتاح دلوقتي</p>
+                </div>
+                <!-- Problem 3 -->
+                <div class="card p-6 glow-orange">
+                    <div class="feature-icon bg-orange-500/10 mb-4">
+                        <i data-lucide="clock" class="w-6 h-6 text-orange-400"></i>
+                    </div>
+                    <h3 class="text-white font-bold text-lg mb-2">ضياع وقت ومجهود</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed">محاولات عشوائية وسؤال ناس وجوجل اللي بيخوف أكثر ما بيفيد</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 3: THE SOLUTION ========== -->
+    <div class="slide" data-slide="2">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-green-400 tracking-wider uppercase">02 — الحل</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+                <span class="gradient-text-green">صحتك</span><br><span class="text-neutral-500">يوجّهك صح</span>
+            </h2>
+            <p class="text-neutral-400 text-lg max-w-2xl mb-12 leading-relaxed">
+                منصة ذكية بتستمع لأعراضك وتوجّهك للقسم المتخصص وأقرب الأطباء ليك — بدون تشخيص أو وصفة دواء
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card p-8 glow-green">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="message-circle" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">محادثة ذكية</h3>
+                            <p class="text-neutral-500 text-sm leading-relaxed">المريض بيدخل ويكتب أعراضه، والنظام بيسأله أسئلة محددة زي السن، النوع، والمنطقة</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-8 glow-green">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="brain" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">تحليل بالذكاء الاصطناعي</h3>
+                            <p class="text-neutral-500 text-sm leading-relaxed">في الخلفية، الـ AI بيتحلل الأعراض ويطابقها مع التخصصات الطبية المختلفة</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-8 glow-green">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="stethoscope" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">تحديد القسم المناسب</h3>
+                            <p class="text-neutral-500 text-sm leading-relaxed">بيوجّهك للقسم الصح — باطنة، أطفال، أنف وأذن، عظام، وغيرها</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-8 glow-green">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="navigation" class="w-6 h-6 text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-lg mb-2">أقرب العيادات</h3>
+                            <p class="text-neutral-500 text-sm leading-relaxed">بناءً على موقعك، يعرضلك أقرب عيادات وأطباء تقدر تروحلهم</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 4: HOW IT WORKS ========== -->
+    <div class="slide" data-slide="3">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-blue-400 tracking-wider uppercase">03 — كيف بيشتغل</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-12 tracking-tight">
+                رحلة المستخدم <span class="text-neutral-500">خطوة بخطوة</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+                <!-- Connecting Line -->
+                <div class="hidden md:block absolute top-12 right-[12%] left-[12%] h-0.5 bg-gradient-to-l from-blue-500/30 via-purple-500/30 to-blue-500/30"></div>
+                
+                <!-- Step 1 -->
+                <div class="text-center relative">
+                    <div class="w-24 h-24 rounded-full bg-blue-500/10 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-5 relative">
+                        <i data-lucide="user-plus" class="w-10 h-10 text-blue-400"></i>
+                        <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">1</span>
+                    </div>
+                    <h4 class="text-white font-bold mb-2">المستخدم يدخل</h4>
+                    <p class="text-neutral-500 text-sm">يسجل دخول ويبدأ محادثة جديدة</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="text-center relative">
+                    <div class="w-24 h-24 rounded-full bg-purple-500/10 border-2 border-purple-500/30 flex items-center justify-center mx-auto mb-5 relative">
+                        <i data-lucide="message-square-text" class="w-10 h-10 text-purple-400"></i>
+                        <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-purple-500 text-white text-xs font-bold flex items-center justify-center">2</span>
+                    </div>
+                    <h4 class="text-white font-bold mb-2">يكتب الأعراض</h4>
+                    <p class="text-neutral-500 text-sm">بيوصف اللي بيشعر بيه والـ AI بيسأله تفاصيل</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="text-center relative">
+                    <div class="w-24 h-24 rounded-full bg-blue-500/10 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-5 relative">
+                        <i data-lucide="cpu" class="w-10 h-10 text-blue-400"></i>
+                        <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-blue-500 text-white text-xs font-bold flex items-center justify-center">3</span>
+                    </div>
+                    <h4 class="text-white font-bold mb-2">تحليل ذكي</h4>
+                    <p class="text-neutral-500 text-sm">موديلين AI بيتعاونوا في تحليل البيانات</p>
+                </div>
+                <!-- Step 4 -->
+                <div class="text-center relative">
+                    <div class="w-24 h-24 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center mx-auto mb-5 relative">
+                        <i data-lucide="check-circle-2" class="w-10 h-10 text-green-400"></i>
+                        <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">4</span>
+                    </div>
+                    <h4 class="text-white font-bold mb-2">النتيجة</h4>
+                    <p class="text-neutral-500 text-sm">القسم المناسب + أقرب العيادات والأطباء</p>
+                </div>
+            </div>
+
+            <!-- Highlight Box -->
+            <div class="mt-12 card p-6 border-blue-500/20 glow-blue">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-blue-400 flex-shrink-0"></i>
+                    <p class="text-neutral-300 text-sm">
+                        <strong class="text-white">ملاحظة مهمة:</strong> النظام لا يُشخّص المرض ولا يَصِف دواء — دوره الوحيد هو توجيه المريض للمكان المناسب
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 5: AI ARCHITECTURE ========== -->
+    <div class="slide" data-slide="4">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-purple-400 tracking-wider uppercase">04 — بناء الذكاء الاصطناعي</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-12 tracking-tight">
+                نظام <span class="gradient-text-purple">AI Agents</span> متعدد
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Agent 1 -->
+                <div class="card p-8 glow-purple relative overflow-hidden">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-blue-500 to-purple-500"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-blue-500/15 flex items-center justify-center">
+                            <i data-lucide="scan-search" class="w-5 h-5 text-blue-400"></i>
+                        </div>
+                        <div>
+                            <span class="tag text-blue-400 text-xs mb-1">Agent 1</span>
+                        </div>
+                    </div>
+                    <h3 class="text-white font-bold text-xl mb-3">KIMI K2.7 — محلل الأعراض</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed mb-4">الموديل الأول بيستقبل الأعراض والبيانات وبيعمل تحليل عميق لكل الأعراض المحتملة وبيطابقها بالتخصصات</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-400">تحليل الأعراض</span>
+                        <span class="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-400">استخراج البيانات</span>
+                        <span class="text-xs px-3 py-1 rounded-full bg-blue-500/10 text-blue-400">مطابقة التخصصات</span>
+                    </div>
+                </div>
+
+                <!-- Arrow -->
+                <div class="hidden md:flex items-center justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style="display:none;">
+                </div>
+
+                <!-- Agent 2 -->
+                <div class="card p-8 glow-purple relative overflow-hidden">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-purple-500 to-orange-500"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-purple-500/15 flex items-center justify-center">
+                            <i data-lucide="message-circle-heart" class="w-5 h-5 text-purple-400"></i>
+                        </div>
+                        <div>
+                            <span class="tag text-purple-400 text-xs mb-1">Agent 2</span>
+                        </div>
+                    </div>
+                    <h3 class="text-white font-bold text-xl mb-3">GPT 5.6 Luna — واجهة المستخدم</h3>
+                    <p class="text-neutral-500 text-sm leading-relaxed mb-4">الموديل التاني بياخد نتيجة التحليل وبيحولها لرسالة واضحة وودودة للمستخدم فيها القسم وأقرب الأطباء</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-400">صياغة الرد</span>
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-400">توجيه المريض</span>
+                        <span class="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-400">عرض العيادات</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Prompt Note -->
+            <div class="mt-8 card p-6">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="file-text" class="w-5 h-5 text-neutral-500 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <h4 class="text-white font-semibold text-sm mb-1">System Prompt مُفصّل</h4>
+                        <p class="text-neutral-500 text-sm">كل موديل عنده System Prompt دقيق بيحدد دوروه بدقة وبيضمن إن الردود دقيقة وآمنة ومحدودة في نطاق التوجيه فقط</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 6: TEAM & WORKFLOW ========== -->
+    <div class="slide" data-slide="5">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-orange-400 tracking-wider uppercase">05 — الفريق وسير العمل</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-12 tracking-tight">
+                فرق عمل <span class="gradient-text-orange">متوازية</span>
+            </h2>
+
+            <!-- Teams -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <!-- UI Team -->
+                <div class="card p-6 glow-orange">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="palette" class="w-5 h-5 text-orange-400"></i>
+                        <h3 class="text-white font-bold">فريق التصميم UI</h3>
+                    </div>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="team-avatar bg-orange-500/15 text-orange-400">م.س</div>
+                        <div>
+                            <p class="text-white text-sm font-semibold">محمد سعيد</p>
+                            <p class="text-neutral-500 text-xs">UI/UX Designer</p>
+                        </div>
+                    </div>
+                    <p class="text-neutral-500 text-xs">تصميم الواجهات على Figma بتجربة مستخدم سلسة</p>
+                </div>
+                <!-- Frontend Team -->
+                <div class="card p-6 glow-blue">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="code-2" class="w-5 h-5 text-blue-400"></i>
+                        <h3 class="text-white font-bold">فريق الواجهة الأمامية</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="team-avatar bg-blue-500/15 text-blue-400 text-sm">م.ح</div>
+                            <div>
+                                <p class="text-white text-sm font-semibold">محمد حسني</p>
+                                <p class="text-neutral-500 text-xs">Frontend Developer</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="team-avatar bg-blue-500/15 text-blue-400 text-sm">م.ع</div>
+                            <div>
+                                <p class="text-white text-sm font-semibold">محمد أحمد عزت</p>
+                                <p class="text-neutral-500 text-xs">Frontend Developer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Backend Team -->
+                <div class="card p-6 glow-green">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="server" class="w-5 h-5 text-green-400"></i>
+                        <h3 class="text-white font-bold">فريق الخلفية Backend</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="team-avatar bg-green-500/15 text-green-400 text-sm">م.أ</div>
+                            <div>
+                                <p class="text-white text-sm font-semibold">محمد أيمن</p>
+                                <p class="text-neutral-500 text-xs">Backend Developer</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="team-avatar bg-green-500/15 text-green-400 text-sm">ي.ك</div>
+                            <div>
+                                <p class="text-white text-sm font-semibold">يحيى الكاشف</p>
+                                <p class="text-neutral-500 text-xs">Backend Developer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow Timeline -->
+            <div class="card p-6">
+                <h4 class="text-white font-bold mb-6 flex items-center gap-2">
+                    <i data-lucide="git-branch" class="w-5 h-5 text-orange-400"></i>
+                    سير العمل
+                </h4>
+                <div class="flex flex-col md:flex-row items-stretch gap-4">
+                    <div class="flex-1 flex items-center gap-3 p-4 rounded-xl bg-white/3">
+                        <span class="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0">1</span>
+                        <div>
+                            <p class="text-white text-sm font-semibold">تحليل الفكرة</p>
+                            <p class="text-neutral-500 text-xs">فهم المطلوب ورسم الـ Flow</p>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center"><i data-lucide="chevron-left" class="w-5 h-5 text-neutral-600"></i></div>
+                    <div class="flex-1 flex items-center gap-3 p-4 rounded-xl bg-white/3">
+                        <span class="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0">2</span>
+                        <div>
+                            <p class="text-white text-sm font-semibold">توزيع المهام</p>
+                            <p class="text-neutral-500 text-xs">3 فرق تعمل بالتوازي</p>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center"><i data-lucide="chevron-left" class="w-5 h-5 text-neutral-600"></i></div>
+                    <div class="flex-1 flex items-center gap-3 p-4 rounded-xl bg-white/3">
+                        <span class="w-8 h-8 rounded-lg bg-orange-500/15 flex items-center justify-center text-orange-400 font-bold text-sm flex-shrink-0">3</span>
+                        <div>
+                            <p class="text-white text-sm font-semibold">تنفيذ متوازي</p>
+                            <p class="text-neutral-500 text-xs">UI → Frontend + Backend معًا</p>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center"><i data-lucide="chevron-left" class="w-5 h-5 text-neutral-600"></i></div>
+                    <div class="flex-1 flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+                        <span class="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center text-green-400 font-bold text-sm flex-shrink-0">4</span>
+                        <div>
+                            <p class="text-white text-sm font-semibold">التكامل والعمل!</p>
+                            <p class="text-neutral-500 text-xs">ربط الكود على ماكينة واحدة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 7: TECH STACK ========== -->
+    <div class="slide" data-slide="6">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-blue-400 tracking-wider uppercase">06 — التقنيات المستخدمة</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-12 tracking-tight">
+                Tech <span class="gradient-text">Stack</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Figma -->
+                <div class="card p-8 group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i data-lucide="figma" class="w-7 h-7 text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-xl">Figma</h3>
+                            <p class="text-neutral-500 text-sm">التصميم و UI/UX</p>
+                        </div>
+                    </div>
+                    <p class="text-neutral-500 text-sm leading-relaxed">تصميم كامل للواجهات بتجربة مستخدم ممتازة مع Dark & Light Mode</p>
+                </div>
+
+                <!-- React + Vite -->
+                <div class="card p-8 group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i data-lucide="atom" class="w-7 h-7 text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-xl">React + Vite</h3>
+                            <p class="text-neutral-500 text-sm">الواجهة الأمامية Frontend</p>
+                        </div>
+                    </div>
+                    <p class="text-neutral-500 text-sm leading-relaxed">أداء عالي مع Vite، مكونات React قابلة لإعادة الاستخدام، وتجربة سلسة</p>
+                </div>
+
+                <!-- Laravel -->
+                <div class="card p-8 group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i data-lucide="box" class="w-7 h-7 text-red-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-xl">Laravel PHP</h3>
+                            <p class="text-neutral-500 text-sm">الخلفية Backend</p>
+                        </div>
+                    </div>
+                    <p class="text-neutral-500 text-sm leading-relaxed">API قوي، إدارة الجلسات، التواصل مع موديلات الـ AI والـ Streaming</p>
+                </div>
+
+                <!-- AI Models -->
+                <div class="card p-8 group">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i data-lucide="brain-circuit" class="w-7 h-7 text-green-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-bold text-xl">AI Models</h3>
+                            <p class="text-neutral-500 text-sm">موديلات الذكاء الاصطناعي</p>
+                        </div>
+                    </div>
+                    <p class="text-neutral-500 text-sm leading-relaxed">KIMI K2.7 للتحليل + GPT 5.6 Luna للرد — موديلين متخصصين لكل دور</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 8: FEATURES ========== -->
+    <div class="slide" data-slide="7">
+        <div class="max-w-5xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-green-400 tracking-wider uppercase">07 — المميزات</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-12 tracking-tight">
+                مميزات <span class="gradient-text-green">التطبيق</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="card p-5">
+                    <div class="feature-icon bg-blue-500/10 mb-3"><i data-lucide="save" class="w-5 h-5 text-blue-400"></i></div>
+                    <h4 class="text-white font-bold text-sm mb-1">حفظ سجل الدردشة</h4>
+                    <p class="text-neutral-500 text-xs">كل محادثة بتتحفظ لكل مستخدم بشكل منفصل</p>
+                </div>
+                <div class="card p-5">
+                    <div class="feature-icon bg-purple-500/10 mb-3"><i data-lucide="messages-square" class="w-5 h-5 text-purple-400"></i></div>
+                    <h4 class="text-white font-bold text-sm mb-1">عدة دردشات</h4>
+                    <p class="text-neutral-500 text-xs">إمكانية إنشاء أكثر من دردشة لأعراض مختلفة</p>
+                </div>
+                <div class="card p-5">
+                    <div class="feature-icon bg-green-500/10 mb-3"><i data-lucide="radio" class="w-5 h-5 text-green-400"></i></div>
+                    <h4 class="text-white font-bold text-sm mb-1">Real-time Streaming</h4>
+                    <p class="text-neutral-500 text-xs">الرد بيتبنى كلمة بكلمة مش نص واحد مرة واحدة</p>
+                </div>
+                <div class="card p-5">
+                    <div class="feature-icon bg-orange-500/10 mb-3"><i data-lucide="log-in" class="w-5 h-5 text-orange-400"></i></div>
+                    <h4 class="text-white font-bold text-sm mb-1">تسجيل ودخول</h4>
+                    <p class="text-neutral-500 text-xs">نظام Authentication كامل لحماية بيانات المستخدم</p>
+                </div>
+                <div class="card p-5">
+                    <div class="feature-icon bg-yellow-500/10 mb-3"><i data-lucide="sun-moon" class="w-5 h-5 text-yellow-400"></i></div>
+                    <h4 class="text-white font-bold text-sm mb-1">وضع ليلي ونهاري</h4>
+                    <p class="text-neutral-500 text-xs">Light Mode & Dark Mode مع حفظ التفضيل</p>
+                </div>
+                <div class="card p-5">
+                    <div class="feature-icon bg-pink-500/10 mb-3"><i data-lucide="smartphone" class="w-5 h-5 text-pink-400"></i></div>
+                    <h4 class="text-white font-bold text-sm mb-1">تصميم متجاوب</h4>
+                    <p class="text-neutral-500 text-xs">Responsive لكل الشاشات — موبايل، تابلت، ديسكتوب</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 9: SAFETY ========== -->
+    <div class="slide" data-slide="8">
+        <div class="max-w-4xl mx-auto w-full text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <span class="text-xs font-mono text-red-400 tracking-wider uppercase">08 — السلامة والأمان</span>
+            </div>
+            
+            <!-- Big Shield Icon -->
+            <div class="relative inline-block mb-8">
+                <div class="w-28 h-28 rounded-full bg-red-500/10 flex items-center justify-center mx-auto relative">
+                    <div class="absolute inset-0 rounded-full border-2 border-red-500/20 pulse-ring"></div>
+                    <i data-lucide="shield-alert" class="w-14 h-14 text-red-400"></i>
+                </div>
+            </div>
+
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                قواعد <span class="text-red-400">صارمة</span> للأمان
+            </h2>
+            <p class="text-neutral-400 text-lg max-w-2xl mx-auto mb-12 leading-relaxed">
+                الموديل مُبرمج بحدود واضحة عشان يضمن سلامة المستخدم
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-right max-w-3xl mx-auto">
+                <div class="card p-6 border-red-500/20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <i data-lucide="x-circle" class="w-6 h-6 text-red-400 flex-shrink-0"></i>
+                        <h3 class="text-red-400 font-bold">لا يُشخّص المرض</h3>
+                    </div>
+                    <p class="text-neutral-500 text-sm">النظام مش بيقولك "عندك كذا" — ده شغل الدكتور</p>
+                </div>
+                <div class="card p-6 border-red-500/20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <i data-lucide="x-circle" class="w-6 h-6 text-red-400 flex-shrink-0"></i>
+                        <h3 class="text-red-400 font-bold">لا يَصِف أدوية</h3>
+                    </div>
+                    <p class="text-neutral-500 text-sm">مفيش وصفة دواء بأي حال من الأحوال — للأمان</p>
+                </div>
+                <div class="card p-6 border-green-500/20 md:col-span-2">
+                    <div class="flex items-center gap-3 mb-3">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-green-400 flex-shrink-0"></i>
+                        <h3 class="text-green-400 font-bold">يُوجّه فقط</h3>
+                    </div>
+                    <p class="text-neutral-500 text-sm">الدور الوحيد: توجيهك للقسم المتخصص المناسب وأقرب الأطباء لعيادتك</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 10: SCREENSHOTS ========== -->
+    <div class="slide" data-slide="9">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-mono text-blue-400 tracking-wider uppercase">09 — لقطات من التطبيق</span>
+                <div class="h-px flex-1 bg-white/5"></div>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-10 tracking-tight">
+                شوف <span class="gradient-text">النتيجة</span>
+            </h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="screenshot-card col-span-2 row-span-2 aspect-[4/3]">
+                    <img src="https://z-cdn-media.chatglm.cn/files/7f3d1dff-1e19-4474-b7b1-2acf5f83985f.png?auth_key=1887757902-8b476992f12c4e7188601245d2ef6726-0-e7a9ab8c2a6594bf76ddb57ab07ff770" alt="محادثة الدردشة" loading="lazy">
+                </div>
+                <div class="screenshot-card aspect-[4/3]">
+                    <img src="https://z-cdn-media.chatglm.cn/files/3d4f0d81-bae0-439f-8cf6-fb804f870e50.png?auth_key=1887757902-a3ee8294f1f942a285c6f2397c9dad5d-0-5de617f7767d946c0c9ca55412a16e10" alt="محادثة أخرى" loading="lazy">
+                </div>
+                <div class="screenshot-card aspect-[4/3]">
+                    <img src="https://z-cdn-media.chatglm.cn/files/33a6b678-a2e1-462b-88ab-fc3e7896a16a.png?auth_key=1887757902-47b5a5e9473b4dc38e983771bb46632f-0-2e7d4c7731eee07e102ffb52106b4b1d" alt="صفحة الدخول" loading="lazy">
+                </div>
+                <div class="screenshot-card aspect-[4/3]">
+                    <img src="https://z-cdn-media.chatglm.cn/files/7092135d-ced9-41fc-a70e-7129a9ab3aca.png?auth_key=1887757902-51a77479053f40839f9b20d7ee062a84-0-1299d746f39b8c7fd8d68d277258196c" alt="التسجيل" loading="lazy">
+                </div>
+                <div class="screenshot-card aspect-[4/3] bg-neutral-900/50 flex items-center justify-center">
+                    <div class="text-center p-4">
+                        <i data-lucide="layout-grid" class="w-8 h-8 text-neutral-600 mx-auto mb-2"></i>
+                        <p class="text-neutral-600 text-xs">المزيد من الشاشات</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SLIDE 11: THANK YOU ========== -->
+    <div class="slide" data-slide="10">
+        <div class="text-center max-w-3xl mx-auto relative">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px]"></div>
+            
+            <div class="relative">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/20 flex items-center justify-center mx-auto mb-8 floating">
+                    <i data-lucide="heart-pulse" class="w-10 h-10 text-blue-400"></i>
+                </div>
+
+                <h2 class="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight">
+                    شكرًا <span class="gradient-text">لكم</span>
+                </h2>
+                
+                <p class="text-xl text-neutral-400 font-light leading-relaxed mb-10">
+                    صحتك — دليلك الذكي للرعاية الصحية<br>
+                    <span class="text-neutral-500">اللي مش بيشخّص.. بس بيوصلّك للمناسب</span>
+                </p>
+
+                <!-- Team Credits -->
+                <div class="card p-6 max-w-lg mx-auto mb-8">
+                    <p class="text-neutral-500 text-xs font-mono uppercase tracking-wider mb-4">فريق العمل</p>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <span class="tag text-neutral-300">محمد سعيد</span>
+                        <span class="tag text-neutral-300">محمد حسني</span>
+                        <span class="tag text-neutral-300">محمد أحمد عزت</span>
+                        <span class="tag text-neutral-300">محمد أيمن</span>
+                        <span class="tag text-neutral-300">يحيى الكاشف</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center gap-4 text-neutral-600 text-sm">
+                    <span>React</span>
+                    <span>•</span>
+                    <span>Laravel</span>
+                    <span>•</span>
+                    <span>AI Powered</span>
+                    <span>•</span>
+                    <span>Figma</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <button onclick="prevSlide()" id="prevBtn" class="fixed right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all z-50 opacity-0" style="pointer-events:none;">
+        <i data-lucide="chevron-right" class="w-5 h-5 text-white"></i>
+    </button>
+    <button onclick="nextSlide()" id="nextBtn" class="fixed left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all z-50">
+        <i data-lucide="chevron-left" class="w-5 h-5 text-white"></i>
+    </button>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const totalSlides = 11;
+        let currentSlide = 0;
+        let isAnimating = false;
+
+        // Create navigation dots
+        const navDotsContainer = document.getElementById('navDots');
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = `nav-dot ${i === 0 ? 'active' : ''}`;
+            dot.onclick = () => goToSlide(i);
+            navDotsContainer.appendChild(dot);
+        }
+
+        function updateSlide(newIndex, direction = 'next') {
+            if (isAnimating || newIndex === currentSlide || newIndex < 0 || newIndex >= totalSlides) return;
+            isAnimating = true;
+
+            const slides = document.querySelectorAll('.slide');
+            const dots = document.querySelectorAll('.nav-dot');
+            const oldSlide = slides[currentSlide];
+            const newSlideEl = slides[newIndex];
+
+            // Exit old slide
+            oldSlide.classList.remove('active');
+            if (direction === 'next') {
+                oldSlide.classList.add('exit-left');
+            }
+            if (direction === 'prev') {
+                oldSlide.style.transform = 'translateX(-60px)';
+                oldSlide.style.opacity = '0';
+            }
+
+            // Prepare new slide
+            if (direction === 'next') {
+                newSlideEl.style.transform = 'translateX(60px)';
+            } else {
+                newSlideEl.style.transform = 'translateX(-60px)';
+            }
+            newSlideEl.style.opacity = '0';
+
+            // Small delay then activate
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    newSlideEl.classList.add('active');
+                    newSlideEl.classList.remove('exit-left');
+                    newSlideEl.style.transform = '';
+                    newSlideEl.style.opacity = '';
+                });
+            });
+
+            // Update dots
+            dots[currentSlide].classList.remove('active');
+            dots[newIndex].classList.add('active');
+
+            // Update progress bar
+            document.getElementById('progressBar').style.width = `${((newIndex + 1) / totalSlides) * 100}%`;
+
+            // Update slide number
+            document.getElementById('slideNumber').textContent = `${String(newIndex + 1).padStart(2, '0')} / ${totalSlides}`;
+
+            // Update nav buttons
+            document.getElementById('prevBtn').style.opacity = newIndex === 0 ? '0' : '1';
+            document.getElementById('prevBtn').style.pointerEvents = newIndex === 0 ? 'none' : 'all';
+            document.getElementById('nextBtn').style.opacity = newIndex === totalSlides - 1 ? '0' : '1';
+            document.getElementById('nextBtn').style.pointerEvents = newIndex === totalSlides - 1 ? 'none' : 'all';
+
+            currentSlide = newIndex;
+
+            setTimeout(() => {
+                isAnimating = false;
+                // Clean up old slide
+                oldSlide.classList.remove('exit-left');
+                oldSlide.style.transform = '';
+                oldSlide.style.opacity = '';
+            }, 700);
+        }
+
+        function nextSlide() {
+            updateSlide(currentSlide + 1, 'next');
+        }
+
+        function prevSlide() {
+            updateSlide(currentSlide - 1, 'prev');
+        }
+
+        function goToSlide(index) {
+            const direction = index > currentSlide ? 'next' : 'prev';
+            updateSlide(index, direction);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goToSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goToSlide(totalSlides - 1);
+            }
+        });
+
+        // Touch/Swipe support
+        let touchStartX = 0;
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        document.addEventListener('touchend', (e) => {
+            const diffX = touchStartX - e.changedTouches[0].clientX;
+            const diffY = touchStartY - e.changedTouches[0].clientY;
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0) nextSlide(); // Swipe left (next in RTL)
+                else prevSlide();
+            }
+        });
+
+        // Mouse wheel
+        let wheelTimeout;
+        document.addEventListener('wheel', (e) => {
+            if (wheelTimeout) return;
+            wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 800);
+            if (e.deltaY > 0) nextSlide();
+            else prevSlide();
+        }, { passive: true });
+
+        // Initialize first slide state
+        document.getElementById('prevBtn').style.opacity = '0';
+        document.getElementById('prevBtn').style.pointerEvents = 'none';
+    </script>
+</body>
+</html>
