@@ -1,6 +1,11 @@
-# 🩺 Sehetak-AI (صحتك AI) — AI-Powered Clinical Triage & Medical Navigation System
-
 <div align="center">
+
+<img src="Frontend/public/logo.png" alt="صحتك - Sehetak AI" width="360" />
+
+# 🩺 Sehetak-AI (صحتك AI)
+### AI-Powered Clinical Triage & Medical Navigation System
+
+
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-Sehetak--AI-4285F4?style=for-the-badge)](https://sehetak-ai.pages.dev/)
 [![AI Engine](https://img.shields.io/badge/🤖_AI_Engine-Google_Gemini_2.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com/)
@@ -14,8 +19,25 @@
 
 ---
 
+## 📽️ Interactive Project Presentation (عرض المشروع التفاعلي)
+
+<div align="center">
+
+> 💡 **اضغط على الرابط التالي لفتح وتصفح شرائح العرض التقديمي التفاعلي بالكامل:**  
+> 🔗 **[🖥️ Open Interactive Presentation Slides](https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html)** • [ملف العرض المحلي](Presentation/index.html)
+
+<br/>
+
+<iframe src="https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html" width="100%" height="520" frameborder="0" style="border: 1px solid #334155; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);" title="Sehetak-AI Presentation"></iframe>
+
+</div>
+
+---
+
 ## 📑 Table of Contents
 
+- [📽️ Interactive Presentation](#️-interactive-project-presentation-عرض-المشروع-التفاعلي)
+- [📸 Application Screenshots & UI Showcase](#-application-screenshots--ui-showcase)
 - [📖 Project Overview](#-project-overview)
 - [🧠 Dual-Model AI Architecture](#-dual-model-ai-architecture)
 - [✨ Key Features](#-key-features)
@@ -25,6 +47,30 @@
 - [🚀 Quick Start (Local Setup)](#-quick-start-local-setup)
 - [☁️ Deployments](#️-deployments)
 - [🛡️ Medical Disclaimer](#️-medical-disclaimer)
+
+---
+
+## 📸 Application Screenshots & UI Showcase
+
+<div align="center">
+
+### 1. 💬 Real-Time AI Medical Consultation (Light & Dark Modes)
+*Multi-turn conversational triage in Egyptian dialect with instant clinical guidance, red-flag analysis, and clinic routing.*
+
+| ☀️ Light Mode Consultation | 🌙 Dark Mode Consultation |
+|:---:|:---:|
+| <img src="Presentation/Screenshot%202026-09-07%20201347.png" alt="AI Consultation Light Mode" width="480"/> | <img src="Presentation/Screenshot%202026-09-07%20201405.png" alt="AI Consultation Dark Mode" width="480"/> |
+
+<br/>
+
+### 2. 🔐 User Authentication & Patient Portal (Light & Dark Modes)
+*Medical-grade authentication interface with full Arabic RTL typography, responsive layout, and theme toggling.*
+
+| ☀️ Light Mode Authentication | 🌙 Dark Mode Authentication |
+|:---:|:---:|
+| <img src="Presentation/WhatsApp%20Image%202026-08-26%20at%206.06.49%20PM.jpeg" alt="Authentication Light Mode" width="480"/> | <img src="Presentation/WhatsApp%20Image%202026-08-26%20at%206.07.50%20PM.jpeg" alt="Authentication Dark Mode" width="480"/> |
+
+</div>
 
 ---
 
