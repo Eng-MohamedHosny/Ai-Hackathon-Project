@@ -23,12 +23,14 @@
 
 <div align="center">
 
-> 💡 **اضغط على الرابط التالي لفتح وتصفح شرائح العرض التقديمي التفاعلي بالكامل:**  
-> 🔗 **[🖥️ Open Interactive Presentation Slides](https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html)** • [ملف العرض المحلي](Presentation/index.html)
+[![Open Interactive Presentation](https://img.shields.io/badge/📽️_Open_Interactive_Presentation-Click_to_View_Slides-2563EB?style=for-the-badge&logo=googleslides&logoColor=white)](https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html)
+&nbsp;
+[![Local Presentation File](https://img.shields.io/badge/📁_Local_File-Presentation%2Findex.html-10B981?style=for-the-badge)](Presentation/index.html)
 
-<br/>
+<br/><br/>
 
-<iframe src="https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html" width="100%" height="520" frameborder="0" style="border: 1px solid #334155; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);" title="Sehetak-AI Presentation"></iframe>
+> 💡 **العرض التقديمي للمشروع مصمم كصفحة تفاعلية حديثة بنظام الشرائح المتحركة (Interactive Slides).**  
+> 🔗 **[🖥️ اضغط هنا لفتح واستعراض شرائح المشروع التفاعلية على المتصفح](https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html)**
 
 </div>
 
