@@ -8,12 +8,13 @@
 
 
 [![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-Sehetak--AI-4285F4?style=for-the-badge)](https://sehetak-ai.pages.dev/)
+[![Presentation](https://img.shields.io/badge/%F0%9F%93%BD%EF%B8%8F_Presentation-Live_Slides-8B5CF6?style=for-the-badge)](https://sehetak-ai-presentation.pages.dev/)
 [![AI Engine](https://img.shields.io/badge/🤖_AI_Engine-Google_Gemini_2.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 **An intelligent, multi-turn medical triage assistant that helps patients describe their symptoms in Egyptian Arabic, analyzes emergency red flags, guides them with natural conversation, and routes them to the ideal medical clinic with instant Google Maps provider links.**
 
-[Explore Live Demo](https://sehetak-ai.pages.dev/)
+[Explore Live Demo](https://sehetak-ai.pages.dev/) • [Interactive Presentation](https://sehetak-ai-presentation.pages.dev/)
 
 </div>
 
@@ -23,14 +24,14 @@
 
 <div align="center">
 
-[![Open Interactive Presentation](https://img.shields.io/badge/📽️_Open_Interactive_Presentation-Click_to_View_Slides-2563EB?style=for-the-badge&logo=googleslides&logoColor=white)](https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html)
+[![Open Interactive Presentation](https://img.shields.io/badge/📽️_Open_Interactive_Presentation-Live_Slides-2563EB?style=for-the-badge)](https://sehetak-ai-presentation.pages.dev/)
 &nbsp;
 [![Local Presentation File](https://img.shields.io/badge/📁_Local_File-Presentation%2Findex.html-10B981?style=for-the-badge)](Presentation/index.html)
 
 <br/><br/>
 
-> 💡 **العرض التقديمي للمشروع مصمم كصفحة تفاعلية حديثة بنظام الشرائح المتحركة (Interactive Slides).**  
-> 🔗 **[🖥️ اضغط هنا لفتح واستعراض شرائح المشروع التفاعلية على المتصفح](https://htmlpreview.github.io/?https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/blob/master/Presentation/index.html)**
+> 💡 **العرض التقديمي للمشروع متاح ومستضاف مباشرة على الويب بنظام الشرائح التفاعلية المتحركة:**  
+> 🔗 **[🖥️ اضغط هنا لفتح واستعراض شرائح المشروع التفاعلية (Live Presentation Slides)](https://sehetak-ai-presentation.pages.dev/)**
 
 </div>
 
@@ -305,7 +306,10 @@ Open your browser at `http://localhost:5173`.
    ```
 2. Deploy the output `dist/` directory to any static hosting or cloud edge provider.
 
-### 2. Backend API
+### 2. Interactive Presentation Slides
+- **Live Presentation**: [https://sehetak-ai-presentation.pages.dev/](https://sehetak-ai-presentation.pages.dev/)
+
+### 3. Backend API
 1. Configure production environment variables:
    ```env
    APP_ENV=production
