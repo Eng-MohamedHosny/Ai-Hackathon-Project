@@ -2,14 +2,13 @@
 
 <div align="center">
 
-[![Live Frontend](https://img.shields.io/badge/🌐_Live_Demo-Cloudflare_Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://sehetak-ai.pages.dev/)
-[![Backend API](https://img.shields.io/badge/⚡_Backend_API-Heroku_Europe-430098?style=for-the-badge&logo=heroku&logoColor=white)](https://sehetak-ai-backend-b73d022f81c4.herokuapp.com/up)
+[![Live Demo](https://img.shields.io/badge/%F0%9F%8C%90_Live_Demo-Sehetak--AI-4285F4?style=for-the-badge)](https://sehetak-ai.pages.dev/)
 [![AI Engine](https://img.shields.io/badge/🤖_AI_Engine-Google_Gemini_2.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 **An intelligent, multi-turn medical triage assistant that helps patients describe their symptoms in Egyptian Arabic, analyzes emergency red flags, guides them with natural conversation, and routes them to the ideal medical clinic with instant Google Maps provider links.**
 
-[Explore Live Demo](https://sehetak-ai.pages.dev/) • [Backend Healthcheck](https://sehetak-ai-backend-b73d022f81c4.herokuapp.com/up) • [Report Bug](https://github.com/Eng-MohamedHosny/Ai-Hackathon-Project/issues)
+[Explore Live Demo](https://sehetak-ai.pages.dev/)
 
 </div>
 
@@ -17,7 +16,6 @@
 
 ## 📑 Table of Contents
 
-- [🌟 Live Deployments](#-live-deployments)
 - [📖 Project Overview](#-project-overview)
 - [🧠 Dual-Model AI Architecture](#-dual-model-ai-architecture)
 - [✨ Key Features](#-key-features)
@@ -25,19 +23,8 @@
 - [💻 Tech Stack](#-tech-stack)
 - [📡 RESTful API Reference](#-restful-api-reference)
 - [🚀 Quick Start (Local Setup)](#-quick-start-local-setup)
-- [☁️ Production Deployment](#️-production-deployment)
+- [☁️ Deployments](#️-deployments)
 - [🛡️ Medical Disclaimer](#️-medical-disclaimer)
-
----
-
-## 🌟 Live Deployments
-
-| Component | Platform | Region | URL |
-|---|---|---|---|
-| **Frontend Web App** | Cloudflare Pages | Global Edge | [https://sehetak-ai.pages.dev/](https://sehetak-ai.pages.dev/) |
-| **Backend API** | Heroku Dyno | Europe (Ireland `eu-west-1`) | [https://sehetak-ai-backend-b73d022f81c4.herokuapp.com](https://sehetak-ai-backend-b73d022f81c4.herokuapp.com) |
-| **Database** | Heroku Managed Postgres | Europe (Ireland `eu-west-1`) | PostgreSQL 16 (Essential-0) |
-| **LLM Inference** | Google AI Studio (Gemini 2.5 Flash Lite) | Low Latency API | OpenAI-Compatible Endpoint |
 
 ---
 
@@ -55,8 +42,8 @@ Unlike generic chatbots, **Sehetak-AI** operates a specialized two-stage clinica
 
 ```mermaid
 flowchart TD
-    User([👤 User / Patient]) -->|Arabic Symptom Text| FE[🖥️ React Frontend - Cloudflare Pages]
-    FE -->|SSE / REST API| BE[⚡ Laravel 12 API - Heroku Europe]
+    User([👤 User / Patient]) -->|Arabic Symptom Text| FE[🖥️ React Frontend]
+    FE -->|SSE / REST API| BE[⚡ Laravel 12 API]
 
     subgraph Dual AI Pipeline
         BE -->|1. History + Prompt| M1[🔬 Model 1: Clinical Extraction Engine\n'Kimi' - Gemini 2.5 Flash Lite]
@@ -65,7 +52,7 @@ flowchart TD
         M2 -->|Empathetic Arabic Advice + Specialty + Maps Link| BE
     end
 
-    BE -->|PostgreSQL| DB[(🗄️ Managed Postgres)]
+    BE -->|PostgreSQL| DB[(🗄️ Database)]
     BE -->|Real-time SSE Chunks| FE
     FE -->|Rich Response + Doctor Finder| User
 ```
@@ -125,20 +112,19 @@ The AI routes patient cases into 13 distinct clinical departments:
 - **Framework**: React 18 + Vite
 - **Styling**: Modern CSS3 (RTL, CSS Variables, Glassmorphism)
 - **State & Streaming**: Custom React hooks with `fetch` SSE streaming reader
-- **Hosting**: Cloudflare Pages (with SPA redirect rule `/* /index.html 200`)
+- **Architecture**: Single Page Application (SPA)
 
 ### Backend
 - **Framework**: Laravel 12 (PHP 8.2+)
 - **Authentication**: Laravel Sanctum (Bearer Tokens)
 - **AI Client**: `openai-php/client` configured with Google AI Studio OpenAI-compatible endpoint
-- **Database**: Heroku Postgres (Essential-0)
-- **Deployment**: Heroku Dyno (`eu-west-1` Ireland region)
+- **Database**: PostgreSQL / SQLite
 
 ---
 
 ## 📡 RESTful API Reference
 
-Base Production URL: `https://sehetak-ai-backend-b73d022f81c4.herokuapp.com/api`
+Base API URL: `https://<your-backend-domain>/api`
 
 ### 1. Authentication
 
@@ -258,39 +244,33 @@ Open your browser at `http://localhost:5173`.
 
 ---
 
-## ☁️ Production Deployment
+## ☁️ Deployments
 
-### 1. Frontend on Cloudflare Pages
+### 1. Frontend Web App
+- **Live Website**: [https://sehetak-ai.pages.dev/](https://sehetak-ai.pages.dev/)
+
+#### Build & Run
 1. Build the production bundle:
    ```bash
    cd Frontend
    npm run build
    ```
-2. Deploy via Wrangler CLI:
-   ```bash
-   npx wrangler pages deploy dist --project-name=sehetak-ai
-   ```
-3. A `public/_redirects` file is included (`/* /index.html 200`) to guarantee seamless client-side SPA routing.
+2. Deploy the output `dist/` directory to any static hosting or cloud edge provider.
 
-### 2. Backend on Heroku (Europe)
-1. Provision Heroku App in Europe:
-   ```bash
-   heroku create sehetak-ai-backend --region eu
-   heroku addons:create heroku-postgresql:essential-0
+### 2. Backend API
+1. Configure production environment variables:
+   ```env
+   APP_ENV=production
+   APP_DEBUG=false
+   FRONTEND_URL="https://sehetak-ai.pages.dev"
+   KIMI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai"
+   KIMI_API_KEY="your_api_key"
+   KIMI_MODEL="gemini-2.5-flash-lite"
+   LUNA_MODEL="gemini-2.5-flash-lite"
    ```
-2. Configure environment variables:
+2. Run database migrations:
    ```bash
-   heroku config:set APP_ENV=production APP_DEBUG=false
-   heroku config:set FRONTEND_URL="https://sehetak-ai.pages.dev"
-   heroku config:set KIMI_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai"
-   heroku config:set KIMI_API_KEY="your_api_key"
-   heroku config:set KIMI_MODEL="gemini-2.5-flash-lite"
-   heroku config:set LUNA_MODEL="gemini-2.5-flash-lite"
-   ```
-3. Deploy Backend via Git Subtree:
-   ```bash
-   git subtree split --prefix=Backend -b heroku-deploy
-   git push -f heroku heroku-deploy:main
+   php artisan migrate --force
    ```
 
 ---
